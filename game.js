@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 
 let player
 let cursors
+let connection
 
 function preload() {
   this.load.image('ground', 'assets/ground.png')
@@ -71,22 +72,32 @@ function create() {
     frameRate: 10,
     repeat: -1
   })
+
+  const url = 'ws://localhost:8085'
+  connection = new WebSocket(url)
+
+  connection.onerror = error => {
+    console.error(error)
+  }
 }
 
 function update() {
-  if (cursors.left.isDown) {
-    player.setVelocityX(-160)
-    player.anims.play('left', true)
-  } else if (cursors.right.isDown) {
-    player.setVelocityX(160)
-    player.anims.play('right', true)
-  } else {
-    player.setVelocityX(0)
-    player.anims.play('still')
-  }
-
-  if (cursors.up.isDown && player.body.touching.down) {
-    player.setVelocityY(-330)
+  connection.onmessage = e => {
+    if (e.data === 'left') {
+      player.setVelocityX(-160)
+      player.anims.play('left')
+    }
+    if (e.data === 'right') {
+      player.setVelocityX(160)
+      player.anims.play('right')
+    }
+    if (e.data === 'still') {
+      player.setVelocityX(0)
+      player.anims.play('still')
+    }
+    if (e.data === 'jump' && player.body.touching.down) {
+      player.setVelocityY(-330)
+    }
   }
 }
 
